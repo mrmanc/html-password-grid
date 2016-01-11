@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+        body, input {
+            font-size: 95%;
+        }
+        h1{
+            page-break-before: always;
+        }
+        h1:first-child{
+            page-break-before: avoid;
+        }
+        table.grid {
+            border-collapse: collapse;
+            width: 100%;
+            height: 18em;
+        }
+        div.gridContainer {
+            width: 18em;
+            float: left;
+            margin: 0 0 1em 1em;
+        }
+        input.gridName {
+            width: 98%;
+            font-size: 100%;
+            text-align: center;
+        }
+        input.gridIdentity {
+            width: 90%;
+            /*width: 98%;*/
+            text-align: center;
+            font-size: 60%;
+        }
+        table, td {
+            border: 1px solid black;
+            text-align: center;
+        }
+        a.reloadLink {
+            color: green;
+            border: 1px solid green;
+            background-color: palegreen;
+            padding: 0 .2em 0 .2em;
+        }
+    </style>
+    <script src="http://www.ethanresnick.com/diceware/diceware.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/seedrandom/2.4.0/seedrandom.min.js"></script>
+</head>
+<body>
+<div id="grids"></div>
+<script>
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    function generateDicewareString() {
+        return diceware(6).join(' ').toLowerCase();
+    }
+    function repopulateGrid(gridNumber) {
+        populateGrid(document.getElementById(buildGridId(gridNumber)), document.getElementById(gridIdentityId(gridNumber)).value);
+    }
+    function populateGrid(grid, seed) {
+        console.log('populating grid '  + grid);
+        grid.innerHTML = '';
+        Math.seedrandom(seed);
+        for (var row = 0; row < 10; row++) {
+            var tr = document.createElement('tr');
+            for (var col = 0; col < 10; col++) {
+                var cell = document.createElement('td');
+                cell.innerHTML = possible.charAt(Math.floor(Math.random() * possible.length));
+                tr.appendChild(cell);
+            }
+            grid.appendChild(tr);
+        }
+        localStorage[grid.getAttribute('id')] = seed;
+        console.log('save ' + seed + ' for grid ' + grid.getAttribute('id'));
+    }
+    function retrieveGrid(grid, seed, gridIdentity) {
+        var gridIdentity = gridIdentity;
+        gridIdentity.value = seed;
+        populateGrid(grid, seed);
+    }
+    function buildGridId(gridNumber) {
+        return 'gridId-' + gridNumber;
+    }
+    function reloadGrid(gridNumber) {
+        var gridId = buildGridId(gridNumber);
+        console.log('reloading grid with id '+ gridId);
+        var grid = document.getElementById(gridId);
+        var seed = generateDicewareString();
+
+        localStorage[gridId] = seed;
+        var gridIdentity = document.getElementById(gridIdentityId(gridNumber))
+        retrieveGrid(grid, seed, gridIdentity);
+    }
+    function gridIdentityId(gridNumber) {
+        return 'gridIdentity' + gridNumber;
+    }
+    function gridNameId(gridNumber) {
+        return 'gridName' + gridNumber;
+    }
+    function saveGridName(gridNumber) {
+        var gridName = document.getElementById(gridNameId(gridNumber));
+        localStorage[gridName.id] = gridName.value;
+    }
+    function buildGrid(gridNumber) {
+        var gridContainer = document.createElement('div');
+        gridContainer.setAttribute('class', 'gridContainer');
+        console.log('Building grid ' + gridNumber);
+        var grid = document.createElement('table');
+        grid.setAttribute('class', 'grid')
+        var gridId = buildGridId(gridNumber);
+        grid.setAttribute('id', gridId)
+        var seed;
+        if(typeof localStorage.gridSeeds === 'undefined') {
+            localStorage.gridSeeds = {};
+            console.log('initialising stored grid seeds');
+        }
+        if(typeof localStorage[gridId] === 'undefined') {
+            seed = generateDicewareString();
+            localStorage[gridId] = seed;
+            console.log('Stored seed ' + seed + ' for grid ' + gridNumber);
+        }
+        else {
+            seed = localStorage[gridId];
+            console.log('Found ' + seed + ' for grid ' + gridNumber);
+        }
+        var gridName = document.createElement('input');
+        gridContainer.appendChild(gridName);
+        gridName.setAttribute('id', gridNameId(gridNumber));
+        gridName.setAttribute('class', 'gridName');
+        gridName.setAttribute('oninput', 'saveGridName('+gridNumber+')');
+        if (! (typeof localStorage[gridNameId(gridNumber)] === 'undefined')) {
+            gridName.value = localStorage[gridNameId(gridNumber)];
+        }
+        var gridIdentity = document.createElement('input');
+        gridContainer.appendChild(gridIdentity);
+        gridIdentity.setAttribute('id', gridIdentityId(gridNumber));
+        gridIdentity.setAttribute('class', 'gridIdentity');
+        gridIdentity.setAttribute('oninput', 'repopulateGrid(\''+gridNumber+'\');');
+        var reloadLink = document.createElement('a');
+        reloadLink.innerText = '↻'
+        reloadLink.setAttribute('onClick', 'reloadGrid('+gridNumber+')');
+        reloadLink.setAttribute('class', 'reloadLink');
+        gridContainer.appendChild(reloadLink);
+        gridContainer.appendChild(grid);
+        retrieveGrid(grid, seed, gridIdentity);
+        return gridContainer;
+    }
+    for (var gridNumber = 0; gridNumber < 6; gridNumber ++) {
+        document.getElementById('grids').appendChild(buildGrid(gridNumber));
+    }
+
+</script>
+</body>
+</html>
