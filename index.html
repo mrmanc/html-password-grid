@@ -56,9 +56,11 @@
         return diceware(6).join(' ').toLowerCase();
     }
     function repopulateGrid(gridNumber) {
-        populateGrid(document.getElementById(buildGridId(gridNumber)), document.getElementById(gridIdentityId(gridNumber)).value);
+        var seedFromControl = document.getElementById(gridSeedControlId(gridNumber)).value;
+        var gridElement = document.getElementById(buildGridId(gridNumber));
+        initialiseGrid(gridElement, seedFromControl);
     }
-    function populateGrid(grid, seed) {
+    function initialiseGrid(grid, seed) {
         console.log('populating grid '  + grid);
         grid.innerHTML = '';
         Math.seedrandom(seed);
@@ -74,11 +76,6 @@
         localStorage[grid.getAttribute('id')] = seed;
         console.log('save ' + seed + ' for grid ' + grid.getAttribute('id'));
     }
-    function retrieveGrid(grid, seed, gridIdentity) {
-        var gridIdentity = gridIdentity;
-        gridIdentity.value = seed;
-        populateGrid(grid, seed);
-    }
     function buildGridId(gridNumber) {
         return 'gridId-' + gridNumber;
     }
@@ -89,10 +86,11 @@
         var seed = generateDicewareString();
 
         localStorage[gridId] = seed;
-        var gridIdentity = document.getElementById(gridIdentityId(gridNumber))
-        retrieveGrid(grid, seed, gridIdentity);
+        var gridSeedControl = document.getElementById(gridSeedControlId(gridNumber))
+        gridSeedControl.value = seed;
+        initialiseGrid(grid, seed);
     }
-    function gridIdentityId(gridNumber) {
+    function gridSeedControlId(gridNumber) {
         return 'gridIdentity' + gridNumber;
     }
     function gridNameId(gridNumber) {
@@ -112,15 +110,18 @@
         grid.setAttribute('id', gridId)
         var seed;
         if(typeof localStorage.gridSeeds === 'undefined') {
+            // never generated any grids… initialise storage for seeds
             localStorage.gridSeeds = {};
             console.log('initialising stored grid seeds');
         }
         if(typeof localStorage[gridId] === 'undefined') {
+            // not been populated yet
             seed = generateDicewareString();
             localStorage[gridId] = seed;
             console.log('Stored seed ' + seed + ' for grid ' + gridNumber);
         }
         else {
+            // able to retrieve stored seed
             seed = localStorage[gridId];
             console.log('Found ' + seed + ' for grid ' + gridNumber);
         }
@@ -134,7 +135,7 @@
         }
         var gridIdentity = document.createElement('input');
         gridContainer.appendChild(gridIdentity);
-        gridIdentity.setAttribute('id', gridIdentityId(gridNumber));
+        gridIdentity.setAttribute('id', gridSeedControlId(gridNumber));
         gridIdentity.setAttribute('class', 'gridIdentity');
         gridIdentity.setAttribute('oninput', 'repopulateGrid(\''+gridNumber+'\');');
         var reloadLink = document.createElement('a');
@@ -143,7 +144,8 @@
         reloadLink.setAttribute('class', 'reloadLink');
         gridContainer.appendChild(reloadLink);
         gridContainer.appendChild(grid);
-        retrieveGrid(grid, seed, gridIdentity);
+        gridIdentity.value = seed;
+        initialiseGrid(grid, seed);
         return gridContainer;
     }
     for (var gridNumber = 0; gridNumber < 6; gridNumber ++) {
