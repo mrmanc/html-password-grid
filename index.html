@@ -28,7 +28,7 @@
             font-size: 100%;
             text-align: center;
         }
-        input.gridIdentity {
+        input.gridSeedControl {
             width: 90%;
             /*width: 98%;*/
             text-align: center;
@@ -61,7 +61,6 @@
         initialiseGrid(gridElement, seedFromControl);
     }
     function initialiseGrid(grid, seed) {
-        console.log('populating grid '  + grid);
         grid.innerHTML = '';
         Math.seedrandom(seed);
         for (var row = 0; row < 10; row++) {
@@ -74,14 +73,12 @@
             grid.appendChild(tr);
         }
         localStorage[grid.getAttribute('id')] = seed;
-        console.log('save ' + seed + ' for grid ' + grid.getAttribute('id'));
     }
     function buildGridId(gridNumber) {
         return 'gridId-' + gridNumber;
     }
     function reloadGrid(gridNumber) {
         var gridId = buildGridId(gridNumber);
-        console.log('reloading grid with id '+ gridId);
         var grid = document.getElementById(gridId);
         var seed = generateDicewareString();
 
@@ -91,7 +88,7 @@
         initialiseGrid(grid, seed);
     }
     function gridSeedControlId(gridNumber) {
-        return 'gridIdentity' + gridNumber;
+        return 'gridSeedControl' + gridNumber;
     }
     function gridNameId(gridNumber) {
         return 'gridName' + gridNumber;
@@ -100,56 +97,68 @@
         var gridName = document.getElementById(gridNameId(gridNumber));
         localStorage[gridName.id] = gridName.value;
     }
-    function buildGrid(gridNumber) {
-        var gridContainer = document.createElement('div');
-        gridContainer.setAttribute('class', 'gridContainer');
-        console.log('Building grid ' + gridNumber);
+    function buildGridSeedControl(gridNumber, seed) {
+        var gridSeedControl = document.createElement('input');
+        gridSeedControl.id = gridSeedControlId(gridNumber);
+        gridSeedControl.className = 'gridSeedControl';
+        gridSeedControl.setAttribute('oninput', 'repopulateGrid(\'' + gridNumber + '\');');
+        gridSeedControl.value = seed;
+        return gridSeedControl;
+    }
+    function buildGridReloadControl(gridNumber) {
+        var reloadLink = document.createElement('a');
+        reloadLink.innerText = '↻';
+        reloadLink.setAttribute('onClick', 'reloadGrid(' + gridNumber + ')');
+        reloadLink.className = 'reloadLink';
+        return reloadLink;
+    }
+    function buildGrid(gridId, seed) {
         var grid = document.createElement('table');
-        grid.setAttribute('class', 'grid')
-        var gridId = buildGridId(gridNumber);
-        grid.setAttribute('id', gridId)
+        grid.className = 'grid';
+        grid.id = gridId;
+        initialiseGrid(grid, seed);
+        return grid;
+    }
+    function buildGridName(gridNumber) {
+        var gridName = document.createElement('input');
+        gridName.id = gridNameId(gridNumber);
+        gridName.className = 'gridName';
+        gridName.setAttribute('oninput', 'saveGridName(' + gridNumber + ')');
+        if (!(typeof localStorage[gridNameId(gridNumber)] === 'undefined')) {
+            gridName.value = localStorage[gridNameId(gridNumber)];
+        }
+        return gridName;
+    }
+    function findOrInitialiseSeed(gridId, gridNumber) {
         var seed;
-        if(typeof localStorage.gridSeeds === 'undefined') {
+        if (typeof localStorage.gridSeeds === 'undefined') {
             // never generated any grids… initialise storage for seeds
             localStorage.gridSeeds = {};
-            console.log('initialising stored grid seeds');
         }
-        if(typeof localStorage[gridId] === 'undefined') {
+        if (typeof localStorage[gridId] === 'undefined') {
             // not been populated yet
             seed = generateDicewareString();
             localStorage[gridId] = seed;
-            console.log('Stored seed ' + seed + ' for grid ' + gridNumber);
         }
         else {
             // able to retrieve stored seed
             seed = localStorage[gridId];
-            console.log('Found ' + seed + ' for grid ' + gridNumber);
         }
-        var gridName = document.createElement('input');
-        gridContainer.appendChild(gridName);
-        gridName.setAttribute('id', gridNameId(gridNumber));
-        gridName.setAttribute('class', 'gridName');
-        gridName.setAttribute('oninput', 'saveGridName('+gridNumber+')');
-        if (! (typeof localStorage[gridNameId(gridNumber)] === 'undefined')) {
-            gridName.value = localStorage[gridNameId(gridNumber)];
-        }
-        var gridIdentity = document.createElement('input');
-        gridContainer.appendChild(gridIdentity);
-        gridIdentity.setAttribute('id', gridSeedControlId(gridNumber));
-        gridIdentity.setAttribute('class', 'gridIdentity');
-        gridIdentity.setAttribute('oninput', 'repopulateGrid(\''+gridNumber+'\');');
-        var reloadLink = document.createElement('a');
-        reloadLink.innerText = '↻'
-        reloadLink.setAttribute('onClick', 'reloadGrid('+gridNumber+')');
-        reloadLink.setAttribute('class', 'reloadLink');
-        gridContainer.appendChild(reloadLink);
-        gridContainer.appendChild(grid);
-        gridIdentity.value = seed;
-        initialiseGrid(grid, seed);
+        return seed;
+    }
+    function buildGridContainer(gridNumber) {
+        var gridContainer = document.createElement('div');
+        gridContainer.className = 'gridContainer';
+        var gridId = buildGridId(gridNumber);
+        var seed = findOrInitialiseSeed(gridId, gridNumber);
+        gridContainer.appendChild(buildGridName(gridNumber));
+        gridContainer.appendChild(buildGridSeedControl(gridNumber, seed));
+        gridContainer.appendChild(buildGridReloadControl(gridNumber));
+        gridContainer.appendChild(buildGrid(gridId, seed));
         return gridContainer;
     }
     for (var gridNumber = 0; gridNumber < 6; gridNumber ++) {
-        document.getElementById('grids').appendChild(buildGrid(gridNumber));
+        document.getElementById('grids').appendChild(buildGridContainer(gridNumber));
     }
 
 </script>
