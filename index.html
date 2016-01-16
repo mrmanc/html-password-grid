@@ -5,6 +5,7 @@
     <title></title>
     <style type="text/css">
         body, input {
+            font-family: sans-serif;
             font-size: 100%;
         }
         h1{
@@ -14,6 +15,7 @@
             page-break-before: avoid;
         }
         table.grid {
+            margin-top: .25em;
             font-family: monospace;
             border-collapse: collapse;
             width: 100%;
@@ -25,9 +27,15 @@
             margin: 0 0 1em 1em;
         }
         input.gridName {
-            width: 98%;
+            width: 83%;
             font-size: 100%;
             text-align: center;
+        }
+        .gridNameLabel {
+            width: 15%;
+            font-size: 100%;
+            padding-right: .5em;
+            /*text-align: center;*/
         }
         input.gridSeedControl {
             width: 90%;
@@ -42,9 +50,12 @@
         }
         a.reloadLink {
             color: green;
-            border: 1px solid green;
-            background-color: palegreen;
-            padding: 0 .2em 0 .2em;
+            font-size: 90%;
+            padding: 0 0 0 .2em;
+            position: relative;
+            top: .2em;
+            left: .2em;
+            text-decoration: none;
         }
     </style>
     <script src="http://www.ethanresnick.com/diceware/diceware.js"></script>
@@ -62,6 +73,9 @@
         var gridElement = document.getElementById(buildGridId(gridNumber));
         initialiseGrid(gridElement, seedFromControl);
     }
+    function nextCharacter() {
+        return possible.charAt(Math.floor(Math.random() * possible.length));
+    }
     function initialiseGrid(grid, seed) {
         grid.innerHTML = '';
         Math.seedrandom(seed);
@@ -69,7 +83,7 @@
             var tr = document.createElement('tr');
             for (var col = 0; col < 9; col++) {
                 var cell = document.createElement('td');
-                cell.innerHTML = possible.charAt(Math.floor(Math.random() * possible.length));
+                cell.innerHTML = nextCharacter();
                 tr.appendChild(cell);
             }
             grid.appendChild(tr);
@@ -85,7 +99,7 @@
         var seed = generateDicewareString();
 
         localStorage[gridId] = seed;
-        var gridSeedControl = document.getElementById(gridSeedControlId(gridNumber))
+        var gridSeedControl = document.getElementById(gridSeedControlId(gridNumber));
         gridSeedControl.value = seed;
         initialiseGrid(grid, seed);
     }
@@ -105,19 +119,23 @@
         gridSeedControl.className = 'gridSeedControl';
         gridSeedControl.setAttribute('oninput', 'repopulateGrid(\'' + gridNumber + '\');');
         gridSeedControl.value = seed;
+        gridSeedControl.title = 'This is just a random string that the grid below is based on. You can share this with someone you trust, but without knowing your route there is nothing they can do with it. You should not share it with those you don’t trust as it makes it significantly easier to guess.';
         return gridSeedControl;
     }
     function buildGridReloadControl(gridNumber) {
         var reloadLink = document.createElement('a');
-        reloadLink.innerText = '↻';
+        reloadLink.innerText = '🗑';
         reloadLink.setAttribute('onClick', 'reloadGrid(' + gridNumber + ')');
         reloadLink.className = 'reloadLink';
+        reloadLink.href = '#';
+        reloadLink.title = 'Click here to create a new grid and throw away the old one.';
         return reloadLink;
     }
     function buildGrid(gridId, seed) {
         var grid = document.createElement('table');
         grid.className = 'grid';
         grid.id = gridId;
+        grid.title = 'This grid is built from the random string above. Memorise a path through the grid and use it with multiple grids to generate unique passwords for different purposes.';
         initialiseGrid(grid, seed);
         return grid;
     }
@@ -126,12 +144,20 @@
         gridName.id = gridNameId(gridNumber);
         gridName.className = 'gridName';
         gridName.setAttribute('oninput', 'saveGridName(' + gridNumber + ')');
+        gridName.title = 'Enter the name of the application or site that this grid relates to.';
         if (!(typeof localStorage[gridNameId(gridNumber)] === 'undefined')) {
             gridName.value = localStorage[gridNameId(gridNumber)];
         }
         return gridName;
     }
-    function findOrInitialiseSeed(gridId, gridNumber) {
+    function buildGridNameLabel(gridNumber) {
+        var gridNameLabel = document.createElement('label');
+        gridNameLabel.innerText = 'App:';
+        gridNameLabel.className = 'gridNameLabel';
+        gridNameLabel.setAttribute('for', gridNameId(gridNumber));
+        return gridNameLabel;
+    }
+    function findOrInitialiseSeed(gridId) {
         var seed;
         if (typeof localStorage.gridSeeds === 'undefined') {
             // never generated any grids… initialise storage for seeds
@@ -152,7 +178,8 @@
         var gridContainer = document.createElement('div');
         gridContainer.className = 'gridContainer';
         var gridId = buildGridId(gridNumber);
-        var seed = findOrInitialiseSeed(gridId, gridNumber);
+        var seed = findOrInitialiseSeed(gridId);
+        gridContainer.appendChild(buildGridNameLabel(gridNumber));
         gridContainer.appendChild(buildGridName(gridNumber));
         gridContainer.appendChild(buildGridSeedControl(gridNumber, seed));
         gridContainer.appendChild(buildGridReloadControl(gridNumber));
