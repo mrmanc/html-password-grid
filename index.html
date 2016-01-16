@@ -5,7 +5,7 @@
     <title></title>
     <style type="text/css">
         body, input {
-            font-size: 95%;
+            font-size: 100%;
         }
         h1{
             page-break-before: always;
@@ -14,6 +14,7 @@
             page-break-before: avoid;
         }
         table.grid {
+            font-family: monospace;
             border-collapse: collapse;
             width: 100%;
             height: 18em;
@@ -35,6 +36,7 @@
             font-size: 60%;
         }
         table, td {
+            font-size: 110%;
             border: 1px solid black;
             text-align: center;
         }
@@ -51,7 +53,7 @@
 <body>
 <div id="grids"></div>
 <script>
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var possible = "ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789£!?%";
     function generateDicewareString() {
         return diceware(6).join(' ').toLowerCase();
     }
@@ -63,9 +65,9 @@
     function initialiseGrid(grid, seed) {
         grid.innerHTML = '';
         Math.seedrandom(seed);
-        for (var row = 0; row < 10; row++) {
+        for (var row = 0; row < 9; row++) {
             var tr = document.createElement('tr');
-            for (var col = 0; col < 10; col++) {
+            for (var col = 0; col < 9; col++) {
                 var cell = document.createElement('td');
                 cell.innerHTML = possible.charAt(Math.floor(Math.random() * possible.length));
                 tr.appendChild(cell);
